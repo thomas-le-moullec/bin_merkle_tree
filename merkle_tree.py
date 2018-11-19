@@ -10,7 +10,7 @@ class MT:
         if nbr_items <= 0:
             raise ValueError("Need at least 1 item in the list to build a valid Merkle Tree. "
                              "Only 1 item merkle tree is handle in the build tree method")
-        self.root_hash = None
+        self.digest = None
         self.nodes = {}
         self.leaves = []
         self.__add_leaves(items)
@@ -25,13 +25,15 @@ class MT:
             self.leaves.append(Node(None, None, hashlib.sha256(item.encode()).hexdigest()))
 
     def build_tree(self):
+        # TODO: Split in submethods
+        # TODO: Allow the three updates without building everything
         stack = []
         # Condition for solo node, otherwise the loop below will run forever because we need a pair
         if len(self.leaves) == 1:
             solo_node = self.leaves.pop()
-            self.root_hash = solo_node.hash_value
+            self.digest = solo_node.hash_value
             self.nodes[solo_node.hash_value] = solo_node
-        while self.root_hash is None:
+        while self.digest is None:
             if len(stack) >= 2 and stack[-1].height == stack[-2].height:
                 # Get the two parents : Two last nodes on the same level / same height
                 parent_a = stack.pop()
@@ -45,7 +47,7 @@ class MT:
                 parent_a.child = child
                 parent_b.child = child
                 if child.height == self.max_height:
-                    self.root_hash = child.hash_value
+                    self.digest = child.hash_value
                 stack.append(child)
             # Push a future parent in the stack
             elif len(self.leaves) > 0:
@@ -72,5 +74,40 @@ class MT:
             print("\n", end='', flush=True)
             cnt += 1
 
-    def merkle_proof(self):
-        pass
+    def merkle_proof(self, hash_to_check, proof_hashes):
+
+        # TODO: Order the proof_hashes by height ?
+
+        # The following steps can be skipped in the recursive calls
+        # Tree not Built
+        if not self.digest:
+            print("A")
+            return False
+        # Handle Single element Tree
+        if self.max_height == 0 and hash_to_check == self.digest:
+            return True
+        if self.max_height == 0 and hash_to_check != self.digest:
+            print("B")
+            return False
+        # Until here can be skipped in the recursive calls
+        # Simplest error, not in the nodes list
+        if hash_to_check not in self.nodes:
+            print("C")
+            return False
+        # Get the closest / sibling hash to compute the next level
+        pair_hash = proof_hashes.pop()
+        pair = self.nodes[pair_hash]
+        if pair.child.parent_a.hash_value == hash_to_check:
+            hash_next_height = hashlib.sha256(hash_to_check.encode() + pair_hash.encode()).hexdigest()
+        elif pair.child.parent_b.hash_value == hash_to_check:
+            hash_next_height = hashlib.sha256(pair_hash.encode() + hash_to_check.encode()).hexdigest()
+        else:
+            print("D")
+            return False
+        if pair.child.hash_value != self.nodes[hash_to_check].child.hash_value \
+                or pair.child.hash_value != hash_next_height:
+            print("E")
+            return False
+        if hash_next_height == self.digest:
+            return True
+        return self.merkle_proof(hash_next_height, proof_hashes)
