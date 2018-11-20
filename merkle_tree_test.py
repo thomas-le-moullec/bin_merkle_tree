@@ -1,7 +1,7 @@
 import unittest
-import hashlib
 import merkle_tree
 from encryption import Encode
+import random
 
 ZERO_DATA = []
 ONE_DATA = ["Hello"]
@@ -9,6 +9,7 @@ TWO_DATA = ["Hello", "World"]
 THREE_DATA = ["Hello", "World", "Nice"]
 SIX_DATA = ["Hello", "World", "Nice", "To", "Meet", "You"]
 SEVEN_DATA = ["Hello", "World", "Nice", "To", "Meet", "You", "Friend"]
+ALL_DATA = [ONE_DATA, TWO_DATA, THREE_DATA, SIX_DATA, SEVEN_DATA]
 
 
 class MerkleTreeTests(unittest.TestCase):
@@ -57,18 +58,42 @@ class MerkleTreeTests(unittest.TestCase):
 
     def test_three_elements_merkle_proof(self):
         mt = merkle_tree.MT(THREE_DATA)
+        last_post = Encode.sha256(THREE_DATA[-1])
+        path = mt.get_branch_by_hash(last_post)
         self.assertTrue(mt.merkle_proof(Encode.sha256(THREE_DATA[2]), [Encode.sha256(THREE_DATA[0]),
                                                                        Encode.sha256(THREE_DATA[1])]))
+        self.assertTrue(mt.merkle_proof(last_post, path))
 
     def test_six_elements_merkle_proof(self):
         mt = merkle_tree.MT(SIX_DATA)
+        post_valid_hash = Encode.sha256(SIX_DATA[3])
+        path = mt.get_branch_by_hash(post_valid_hash)
         list_nodes = list(mt.nodes)
         self.assertTrue(mt.merkle_proof(list_nodes[3], [list_nodes[10], list_nodes[9], list_nodes[2], list_nodes[4]]))
+        # Correct case where the path is corresponding with the hash of the data
+        self.assertTrue(mt.merkle_proof(post_valid_hash, path))
+        path = mt.get_branch_by_hash(post_valid_hash)
+
+        # Error case where the path is not corresponding with the hash of the data
+        post_error_hash = Encode.sha256(SIX_DATA[1])
+        self.assertFalse(mt.merkle_proof(post_error_hash, path))
 
     def test_seven_elements_merkle_proof(self):
         mt = merkle_tree.MT(SEVEN_DATA)
         list_nodes = list(mt.nodes)
         self.assertTrue(mt.merkle_proof(list_nodes[0], [list_nodes[12], list_nodes[11], list_nodes[5], list_nodes[1]]))
+
+    def test_all_data_merkle_proof(self):
+        for data_row in ALL_DATA:
+            mt = merkle_tree.MT(data_row)
+            secure_random = random.SystemRandom()
+            post = Encode.sha256(secure_random.choice(data_row))
+            path = mt.get_branch_by_hash(post)
+            self.assertTrue(mt.merkle_proof(post, path))
+            path = mt.get_branch_by_hash(post)
+            false_post = "Not in the tree data"
+            false_post = Encode.sha256(false_post)
+            self.assertFalse(mt.merkle_proof(false_post, path))
 
 
 if __name__ == "__main__":

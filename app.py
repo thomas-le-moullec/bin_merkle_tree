@@ -1,3 +1,4 @@
+from encryption import Encode
 import merkle_tree
 
 if __name__ == '__main__':
@@ -5,8 +6,10 @@ if __name__ == '__main__':
     posts = ["Hello", "World", "Nice", "To", "Meet", "You", "Friend"]
     mt = merkle_tree.MT(posts)
     mt.print_merkle_tree()
-    list_nodes = list(mt.nodes)
-    if mt.merkle_proof(list_nodes[0], [list_nodes[12], list_nodes[11], list_nodes[5], list_nodes[1]]) is True:
-        print("Hash:"+str(list_nodes[0])+ "is in the tree !")
+    last_post = Encode.sha256(posts[-1])
+    path = mt.get_branch_by_hash(last_post)
+    print("Path:"+str(path))
+    if mt.merkle_proof(last_post, path) is True:
+        print("Hash:"+str(last_post)+ "is in the tree !")
     else:
-        print("Hash:" + str(list_nodes[0]) + " is NOT in the tree !")
+        print("Hash:" + str(last_post) + " is NOT in the tree !")
