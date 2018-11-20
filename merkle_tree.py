@@ -1,5 +1,6 @@
 import hashlib
 import math
+from encryption import Encode
 
 from node import Node
 
@@ -22,7 +23,7 @@ class MT:
 
     def __add_leaves(self, items):
         for item in items:
-            self.leaves.append(Node(None, None, hashlib.sha256(item.encode()).hexdigest()))
+            self.leaves.append(Node(None, None, Encode.sha256(item)))
 
     def build_tree(self):
         # TODO: Split in submethods
@@ -40,7 +41,9 @@ class MT:
                 parent_b = stack.pop()
                 # Calculate the Hash value of the child with the parents hashes
 
-                child_hash = hashlib.sha256(parent_a.hash_value.encode() + parent_b.hash_value.encode()).hexdigest()
+                child_hash = Encode.sha256(parent_a.hash_value + parent_b.hash_value)
+                print("Child Hash :"+child_hash+ " parent_a: "+str(parent_a.hash_value)+
+                      "parent_b: "+str(parent_b.hash_value))
                 # Inserting of the new Node as a child of the two parents
                 child = Node(parent_a, parent_b, child_hash)
                 self.nodes[child_hash] = child
@@ -81,32 +84,27 @@ class MT:
         # The following steps can be skipped in the recursive calls
         # Tree not Built
         if not self.digest:
-            print("A")
             return False
         # Handle Single element Tree
         if self.max_height == 0 and hash_to_check == self.digest:
             return True
         if self.max_height == 0 and hash_to_check != self.digest:
-            print("B")
             return False
         # Until here can be skipped in the recursive calls
         # Simplest error, not in the nodes list
         if hash_to_check not in self.nodes:
-            print("C")
             return False
         # Get the closest / sibling hash to compute the next level
         pair_hash = proof_hashes.pop()
         pair = self.nodes[pair_hash]
         if pair.child.parent_a.hash_value == hash_to_check:
-            hash_next_height = hashlib.sha256(hash_to_check.encode() + pair_hash.encode()).hexdigest()
+            hash_next_height = Encode.sha256(hash_to_check + pair_hash)
         elif pair.child.parent_b.hash_value == hash_to_check:
-            hash_next_height = hashlib.sha256(pair_hash.encode() + hash_to_check.encode()).hexdigest()
+            hash_next_height = Encode.sha256(pair_hash + hash_to_check)
         else:
-            print("D")
             return False
         if pair.child.hash_value != self.nodes[hash_to_check].child.hash_value \
                 or pair.child.hash_value != hash_next_height:
-            print("E")
             return False
         if hash_next_height == self.digest:
             return True
