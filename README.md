@@ -8,12 +8,12 @@ Simple merkle tree implementation to bootstrap Authenticated Data Structure in I
 * node.py is the class defining each node of the merkle tree: Hash, parents, child
 * encryption.py is a simple encapsulation of cryptography functions used for hash.
 
-###Run the tests
+### Run the tests
 In project root folder:
 python -m unittest tests/merkle_tree_test.py
 Currently 10 tests
 
-###TO DO:
+### TO DO:
 * Need to update the three
 
 #### Rights and License:
