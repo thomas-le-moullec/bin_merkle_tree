@@ -1,7 +1,7 @@
 import math
-from encryption import Encode
+from src.encryption import Encode
 
-from node import Node
+from src.node import Node
 
 
 class MT:

@@ -1,5 +1,5 @@
-from encryption import Encode
-import merkle_tree
+from src.encryption import Encode
+from src import merkle_tree
 
 if __name__ == '__main__':
     print("Running the Merkle Tree application")
