@@ -29,9 +29,9 @@ class MerkleTreeTests(unittest.TestCase):
 
     def test_three_element_valid(self):
         mt = merkle_tree.MT(data.THREE_DATA)
-        expected_digest = Encode.sha256((Encode.sha256(data.THREE_DATA[0]) +
-                                         Encode.sha256(Encode.sha256(data.THREE_DATA[1]) +
-                                                       Encode.sha256(data.THREE_DATA[2]))))
+        expected_digest = Encode.sha256((Encode.sha256(Encode.sha256(data.THREE_DATA[0]) +
+                                                       Encode.sha256(data.THREE_DATA[1]))
+                                         + Encode.sha256(data.THREE_DATA[2])))
         self.assertEqual(expected_digest, mt.digest)
         self.assertEqual(2, mt.max_height)
         self.assertEqual(5, len(mt.nodes.keys()))
@@ -54,8 +54,9 @@ class MerkleTreeTests(unittest.TestCase):
         mt = merkle_tree.MT(data.THREE_DATA)
         last_post = Encode.sha256(data.THREE_DATA[-1])
         path = mt.get_branch_by_hash(last_post)
-        self.assertTrue(mt.merkle_proof(Encode.sha256(data.THREE_DATA[2]), [Encode.sha256(data.THREE_DATA[0]),
-                                                                       Encode.sha256(data.THREE_DATA[1])]))
+        self.assertTrue(mt.merkle_proof(Encode.sha256(data.THREE_DATA[2]),
+                                        [Encode.sha256(Encode.sha256(data.THREE_DATA[0]) +
+                                                       Encode.sha256(data.THREE_DATA[1]))]))
         self.assertTrue(mt.merkle_proof(last_post, path))
 
     def test_six_elements_merkle_proof(self):

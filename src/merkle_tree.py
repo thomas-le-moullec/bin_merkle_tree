@@ -24,6 +24,18 @@ class MT:
         for item in items:
             self.leaves.append(Node(None, None, Encode.sha256(item)))
 
+    def add_data(self, data):
+        self.__add_leaves(data)
+        self.__update_tree()
+
+    def __update_tree(self):
+        # This method is used to update the merkle tree with a new list of values
+        # If we want to balance the tree
+        # 2 possibilities: current number of leaves = 2n + 1 or 2n
+        # First case, we need to decrease the height of the unpair leaf to 0 and recalculate the branch to the root
+        # Second case, we can just add the new leaves using the 'pair stack' and recalculate the branch
+        pass
+
     def __create_child(self, parent_a, parent_b):
         child_hash = Encode.sha256(parent_a.hash_value + parent_b.hash_value)
         # print("Child Hash :" + child_hash + " parent_a: " + str(parent_a.hash_value) +
@@ -61,24 +73,24 @@ class MT:
 
     def __create_one_leaf_tree(self):
         if len(self.leaves) == 1:
-            solo_node = self.leaves.pop()
+            solo_node = self.leaves.pop(0)
             self.digest = solo_node.hash_value
             self.nodes[solo_node.hash_value] = solo_node
 
     def __insert_pair_in_tree(self, stack):
         # Get the two parents : Two last nodes on the same level / same height
-        parent_a = stack.pop()
-        parent_b = stack.pop()
+        parent_b = stack.pop(0)
+        parent_a = stack.pop(0)
         # Calculate the Hash value of the child with the parents hashes
         child = self.__create_child(parent_a, parent_b)
         if child.height == self.max_height:
             self.digest = child.hash_value
-        stack.append(child)
+        stack.insert(0, child)
 
     def __move_leaf_to_tree(self, stack):
-        leaf = self.leaves.pop()
+        leaf = self.leaves.pop(0)
         self.nodes[leaf.hash_value] = leaf
-        stack.append(leaf)
+        stack.insert(0, leaf)
 
     def build_tree(self):
         # TODO: Think about balancing the three with updates without building everything
@@ -86,14 +98,14 @@ class MT:
         # Condition for solo node, otherwise the loop below will run forever because we need a pair
         self.__create_one_leaf_tree()
         while self.digest is None:
-            if len(stack) >= 2 and stack[-1].height == stack[-2].height:
+            if len(stack) >= 2 and stack[0].height == stack[1].height:
                 self.__insert_pair_in_tree(stack)
             # Push a future parent in the stack
             elif len(self.leaves) > 0:
                 self.__move_leaf_to_tree(stack)
             # Promote a node to find a pair and balance the three
             else:
-                stack[-1].height += 1
+                stack[0].height += 1  # To change
         self.is_built = True
 
     def print_merkle_tree(self):
